@@ -104,19 +104,56 @@ g <-
 g+geom_point(size = 3,alpha = 0.15)
 
 #
-outlier.alpha = 0
-set.seed(2019)
-g + geom_jitter(size = 2, alpha = 0.25,height = 0.25)+stat_summary(fun = mean, geom = "point", size = 5)
+#outlier.alpha = 0
+#set.seed(2019)
 
+#Change to jitter to showcase more points
+g + geom_jitter(size = 3, alpha = 0.25,height = 0.25)+stat_summary(fun = mean, geom = "point", size = 5)
+
+#Get a world average to compare for the different continents
 world_avg <-
   df_sorted2 %>%
   summarize(avg = mean(student_ratio, na.rm = TRUE)) %>%
   pull(avg)
 
-#
-g + geom_jitter(size = 2, alpha = 0.35,height = 0.2)+
+#Add text labels to the graph
+g_text <- g + geom_jitter(size = 4, alpha = 0.25,height = 0.2)+
   stat_summary(fun = mean, geom = "point", size = 5)+
-  geom_vline(aes(xintercept=world_avg, colour="grey"))
+  geom_vline(aes(xintercept=world_avg, colour="grey"))+
+  geom_segment(
+    aes(y = region, yend = region,
+        x = world_avg, xend = student_ratio_region),
+    size = 0.8)+
+  annotate(
+    "text", x = 35, y = 6.3, family = "Poppins", size = 3, color = "gray20", lineheight = .9,
+    label = glue::glue("Worldwide average:\n{round(world_avg, 1)} students per teacher")
+  ) +
+  annotate(
+    "text", x = 10, y = 3.5, family = "Poppins", size = 3, color = "gray20",
+    label = "Continental average"
+  ) +
+  annotate(
+    "text", x = 11, y = 1.7, family = "Poppins", size = 3, color = "gray20",
+    label = "Countries per continent"
+  ) 
 
+#Set arrows
+arrows <-
+  tibble(
+    y1 = c(6.1, 3.62, 1.8, 1.8),
+    y2 = c(5.6, 4, 2.1, 2.76),
+    x1 = c(world_avg + 6, 10.5, 9, 9),
+    x2 = c(world_avg + 0.1, 18.4, 14.16, 12)
+  )
+
+#Plot arrows
+g_arrows <-
+    g_text +
+    geom_curve(
+      data = arrows, aes(x = x1, y = y1, xend = x2, yend = y2),
+      arrow = arrow(length = unit(0.08, "inch")), size = 0.5,
+      color = "gray20", curvature = -0.3
+    )
+g_arrows
 
 
