@@ -55,3 +55,68 @@ ratios_3 <- na.omit(df_ratio2)
 df_group <- df_ratio2 %>% 
   group_by(region)
 df_group
+
+#Initial box plot of data
+ggplot(ratios_3, aes(x = region, y = student_ratio)) +
+  geom_boxplot()
+
+#Arrange the box plots in ascending to descending order
+df_sorted <-
+  ratios_3 %>%
+  mutate(region = fct_reorder(region, student_ratio_region))
+
+#Wrong order so rearrange to correct order
+df_sorted2 <-
+  ratios_3 %>%
+  mutate(region = fct_reorder(region, -student_ratio_region))
+
+ggplot(df_sorted2,mapping = aes(x=region,y=student_ratio))+ geom_boxplot()
+
+#Violin plot
+ggplot(df_sorted2,mapping = aes(x=region,y=student_ratio))+ geom_violin()
+
+#Switch x and y axis
+ggplot(df_sorted2,mapping = aes(x=student_ratio,y=region))+ geom_violin()
+
+#Changed the x axis length and expand axis
+ggplot(df_sorted2,mapping = aes(x=student_ratio,y=region))+ geom_violin() + scale_x_continuous(limits = c(0,90),expand = c(0.02, 0.02))
+
+ggplot(df_sorted2,mapping = aes(x=student_ratio,y=region,color = region))+ geom_violin() + scale_x_continuous(limits = c(0,90),expand = c(0.02, 0.02)) 
+
+
+#Set theme of the graph
+theme_set(theme_light(base_size = 18, base_family = "Poppins"))
+
+#Sort out the variables of the graphs
+g <-
+  ggplot(df_sorted2, aes(x = student_ratio, y = region, color = region)) +
+  scale_x_continuous(limits = c(0, 90), expand = c(0.02, 0.02)) +
+
+  labs(y = NULL, x = "Student to teacher ratio") +
+  theme(
+    legend.position = "none",
+    axis.title = element_text(size = 16),
+    axis.text.x = element_text(family = "Roboto Mono", size = 12),
+    panel.grid = element_blank()
+  )
+
+#Point of the graph
+g+geom_point(size = 3,alpha = 0.15)
+
+#
+outlier.alpha = 0
+set.seed(2019)
+g + geom_jitter(size = 2, alpha = 0.25,height = 0.25)+stat_summary(fun = mean, geom = "point", size = 5)
+
+world_avg <-
+  df_sorted2 %>%
+  summarize(avg = mean(student_ratio, na.rm = TRUE)) %>%
+  pull(avg)
+
+#
+g + geom_jitter(size = 2, alpha = 0.35,height = 0.2)+
+  stat_summary(fun = mean, geom = "point", size = 5)+
+  geom_vline(aes(xintercept=world_avg, colour="grey"))
+
+
+
