@@ -87,7 +87,7 @@ ggplot(df_sorted2,mapping = aes(x=student_ratio,y=region,color = region))+ geom_
 #Set theme of the graph
 theme_set(theme_light(base_size = 18, base_family = "Poppins"))
 
-#Sort out the variables of the graphs
+#Sort out the variables of the graphs 
 g <-
   ggplot(df_sorted2, aes(x = student_ratio, y = region, color = region)) +
   scale_x_continuous(limits = c(0, 90), expand = c(0.02, 0.02)) +
