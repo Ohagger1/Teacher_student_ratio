@@ -101,7 +101,7 @@ g <-
   )
 
 #Point of the graph
-g+geom_point(size = 3,alpha = 0.15)
+g+geom_point(size = 3,alpha = 0.2)
 
 #
 #outlier.alpha = 0
