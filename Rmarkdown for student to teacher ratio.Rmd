@@ -3,8 +3,8 @@ title: "Teacher student ratio"
 author: "Oliver Hagger"
 date: "`r Sys.Date()`"
 output:
-  pdf_document: default
   html_document: default
+  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -15,25 +15,22 @@ knitr::opts_chunk$set(echo = TRUE)
 
 Markdown document for teacher to student ratio data
 
-```{install packages}
+## Install packages
+
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+
 library(tidyverse)
 library(ggplot2)
 ```
 
+## Import data from internet
 
-```{Sort data}
-library(tidyverse)
-library(ggplot2)
+```{r echo=TRUE, message=FALSE, warning=FALSE}
 
-df_students <- readr::read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday
-                              /master/data/2019/2019-05-07
-                              /student_teacher_ratio.csv")
+df_students <- readr::read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-05-07/student_teacher_ratio.csv")
 head(df_students)
 
-df_world_tile <- readr::read_csv("https://gist.githubusercontent.com/maartenzam/
-                                 787498bbc07ae06b637447dbd430ea0a/raw/
-                                 9a9dafafb44d8990f85243a9c7ca349acd3a0d07/
-                                 worldtilegrid.csv") %>% 
+df_world_tile <- readr::read_csv("https://gist.githubusercontent.com/maartenzam/787498bbc07ae06b637447dbd430ea0a/raw/9a9dafafb44d8990f85243a9c7ca349acd3a0d07/worldtilegrid.csv") %>% 
   mutate(
     ## Namibias two-digit country code is handled as `NA` - let us fix that
     alpha.2 = if_else(name == "Namibia", "NA", alpha.2),
@@ -45,7 +42,12 @@ df_world_tile <- readr::read_csv("https://gist.githubusercontent.com/maartenzam/
     ## to join both data sets, we need a id column
     country_code = alpha.3
   )
-  
+```
+
+## Fixing countries
+
+
+```{r message=FALSE, warning=FALSE, include=FALSE}
 df_ratios <- df_students %>% 
   ## Let's keep only the most recent data per country
   group_by(country, indicator) %>% 
@@ -53,7 +55,6 @@ df_ratios <- df_students %>%
   ungroup() %>% 
   # Create `NA`s for countries which do not have any data 2012-2018
   complete(indicator, nesting(country, country_code)) %>% 
-  ## Let's focus on primary education and keep only countries (coded by letters)
   filter(
     indicator == "Primary Education",
     str_detect(country_code, "[A-Z]")
@@ -68,27 +69,75 @@ df_ratios <- df_students %>%
   mutate(student_ratio_region = median(student_ratio, na.rm = T)) %>% 
   ungroup()
 
-df_ratio2 <- df_ratios %>%  
+#New data.frame with only data needed for analysis
+df_ratio2 <- df_ratios %>% 
   select(c("indicator", "country", "region","student_ratio", "student_ratio_region"))
 
+table(df_ratio2)
+head(df_ratio2)
+
+#Removed the rows which contain NA
 ratios_3 <- na.omit(df_ratio2)
 
+df_group <- df_ratio2 %>% 
+  group_by(region)
+df_group
+
+#Initial box plot of data
 ggplot(ratios_3, aes(x = region, y = student_ratio)) +
   geom_boxplot()
 
+#Arrange the box plots in ascending to descending order
+df_sorted <-
+  ratios_3 %>%
+  mutate(region = fct_reorder(region, student_ratio_region))
+
+#Wrong order so rearrange to correct order
 df_sorted2 <-
   ratios_3 %>%
   mutate(region = fct_reorder(region, -student_ratio_region))
 
+```
+
+#Box plot
+
+```{r}
 ggplot(df_sorted2,mapping = aes(x=region,y=student_ratio))+ geom_boxplot()
+```
 
-ggplot(df_sorted2,mapping = aes(x=student_ratio,y=region,color = region))+ 
-  geom_violin() + 
-  scale_x_continuous(limits = c(0,90),expand = c(0.02, 0.02)) 
 
+#Violin plot
+
+```{r}
+ggplot(df_sorted2,mapping = aes(x=region,y=student_ratio))+ geom_violin()
+```
+
+
+##Switch x and y axis
+
+```{r}
+ggplot(df_sorted2,mapping = aes(x=student_ratio,y=region))+ geom_violin()
+```
+
+#Changed the x axis length and expand axis
+
+```{r}
+ggplot(df_sorted2,mapping = aes(x=student_ratio,y=region))+ geom_violin() + scale_x_continuous(limits = c(0,90),expand = c(0.02, 0.02))
+
+ggplot(df_sorted2,mapping = aes(x=student_ratio,y=region,color = region))+ geom_violin() + scale_x_continuous(limits = c(0,90),expand = c(0.02, 0.02)) 
+```
+
+#Set theme of the graph
+
+```{r}
 theme_set(theme_light(base_size = 18, base_family = "Poppins"))
+```
 
-#Sort out the variables of the graphs
+## Sort out the variables of the graphs
+
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+
+#Sort out the variables of the graphs 
 g <-
   ggplot(df_sorted2, aes(x = student_ratio, y = region, color = region)) +
   scale_x_continuous(limits = c(0, 90), expand = c(0.02, 0.02)) +
@@ -102,17 +151,30 @@ g <-
   )
 
 
-#Change to jitter to showcase more points
-g + geom_jitter(size = 3, alpha = 0.25,height = 0.25)+
-  stat_summary(fun = mean, geom = "point", size = 5)
+```
 
-#Get a world average to compare for the different continents
+## Change to jitter to showcase more points
+
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+g+geom_point(size = 3,alpha = 0.2)
+
+g + geom_jitter(size = 3, alpha = 0.25,height = 0.25)+stat_summary(fun = mean, geom = "point", size = 5)
+```
+
+## Get a world average to compare for the different continents
+
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+
 world_avg <-
   df_sorted2 %>%
   summarize(avg = mean(student_ratio, na.rm = TRUE)) %>%
   pull(avg)
+```
 
-#Add text labels to the graph
+## Add text labels to the graph
+
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+
 g_text <- g + geom_jitter(size = 4, alpha = 0.25,height = 0.2)+
   stat_summary(fun = mean, geom = "point", size = 5)+
   geom_vline(aes(xintercept=world_avg, colour="grey"))+
@@ -133,7 +195,13 @@ g_text <- g + geom_jitter(size = 4, alpha = 0.25,height = 0.2)+
     label = "Countries per continent"
   ) 
 
-#Set arrows
+```
+
+
+
+## Set arrows
+
+```{r echo=TRUE, message=FALSE, warning=FALSE}
 arrows <-
   tibble(
     y1 = c(6.1, 3.62, 1.8, 1.8),
@@ -141,8 +209,12 @@ arrows <-
     x1 = c(world_avg + 6, 10.5, 9, 9),
     x2 = c(world_avg + 0.1, 18.4, 14.16, 12)
   )
+```
 
-#Plot arrows
+
+##Plot arrows
+
+```{r echo=TRUE, message=FALSE, warning=FALSE}
 g_arrows <-
     g_text +
     geom_curve(
@@ -151,9 +223,12 @@ g_arrows <-
       color = "gray20", curvature = -0.3
     )
 
-plot(g_arrows)
 ```
 
+## Final plot
+
+
+![Teacher to student ratio](Teacher to student ratio final graph.png)
 
 
 
